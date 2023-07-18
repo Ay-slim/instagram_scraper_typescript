@@ -45,3 +45,48 @@ export type ProfilePicContainer = {
     }
   }
 }
+
+export type CommentUser = {
+  username: string;
+  profile_pic_url: string;
+  pk_id: string;
+}
+
+export type Comment = {
+  child_comment_count: number;
+  comment_like_count: number;
+  text: string;
+  user: CommentUser;
+  pk: string;
+}
+
+export type Caption = {
+  created_at: number;
+  text: string;
+}
+
+export type PostComments = {
+  pk: string;
+  caption: Caption;
+  comment_count: number;
+  comments: Comment[];
+}
+
+export type CommentsAPIResponse = {
+  caption: Caption & {
+    [key: string]: any;
+  };
+  comment_count: number;
+  has_more_headload_comments: boolean;
+  next_min_id: string;
+  comments: Comment &
+    {
+      [key: string]: any;
+    }[];
+  [key: string]: any;
+}
+
+export type AxiosCommentsResponse = {
+  [key: string]: any;
+  data: CommentsAPIResponse;
+};
