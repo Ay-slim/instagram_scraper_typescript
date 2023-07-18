@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "target": "ES2017",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "outDir": "dist",
+    "lib": ["es2015", "es2019", "es2020", "dom"],
+    "noEmitHelpers": false
+  },
+  "exclude": ["dist"]
+}
