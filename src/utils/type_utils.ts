@@ -1,3 +1,6 @@
+/**
+ * Follower Types
+ */
 export type FollowersReturnTemplate = {
   username: string;
   profile_pic_url: string;
@@ -46,6 +49,9 @@ export type ProfilePicContainer = {
   }
 }
 
+/**
+ * Comment Types
+ */
 export type CommentUser = {
   username: string;
   profile_pic_url: string;
@@ -90,3 +96,23 @@ export type AxiosCommentsResponse = {
   [key: string]: any;
   data: CommentsAPIResponse;
 };
+
+export type CommentDBItem = {
+  child_comment_count: number;
+  comment_like_count: number;
+  text: string;
+  username: string;
+  profile_pic_url: string;
+  user_pk_id: string;
+}
+
+/**
+ * Ranking Types
+ */
+export type FanRankings = {
+  [key: string]: {
+    interaction_score?: number;
+    is_follower?: boolean;
+    aggregated_comments: string[];
+  }
+}
