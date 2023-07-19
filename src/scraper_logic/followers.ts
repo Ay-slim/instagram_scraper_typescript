@@ -131,7 +131,7 @@ export const scrape_followers = async(req: Request, res: Response) => {
       //Add follower data to DB
       await knex_client('ig_fb_followers').update({
         followers: JSON.stringify(final_followers_list),
-      }).where({batch_id})
+      }).where({athlete_id, batch_id})
       await page.close();
     }
     return;
