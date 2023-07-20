@@ -1,7 +1,9 @@
 import axios from 'axios'
 import fs from 'fs';
+import jwt from 'jsonwebtoken';
 
-import { FollowersReturnTemplate, AxiosFollowerRes } from "./type_utils";
+import { FollowersReturnTemplate, AxiosFollowerRes, ProfileType, NormalizedProfileType, ServerReturnType } from "./type_utils";
+import { JwtPayloadWithId } from './type_utils';
 
 export const generate_url = (
   url_object: URL,
@@ -85,3 +87,48 @@ export const text_count_to_num = (str: string) => {
   //Todo: Rewrite this to account for people with followers or posts above a million
   return Number(str.replace(",", ""));
 };
+
+export const normalize_profile_basics = (raw_basics: ProfileType): NormalizedProfileType => {
+  return {
+    bio: raw_basics.biography,
+    full_name: raw_basics.full_name,
+    username: raw_basics.username,
+    no_of_posts: raw_basics.edge_owner_to_timeline_media.count,
+    following: raw_basics.edge_follow.count,
+    followers: raw_basics.edge_followed_by.count,
+    profile_pic_url: raw_basics.profile_pic_url
+  }
+}
+
+const laconic_unauthorized_error = {
+  status: 401,
+  message: 'Unauthorized',
+}
+
+export const login_auth = async (
+  bearer_token: string,
+  sign_key: string
+): Promise<JwtPayloadWithId> => {
+  try {
+      const token = bearer_token.replace('Bearer ', '')
+      if (!token) {
+          throw new Error('No login token passed')
+      }
+      const jwt_secret = process.env.JWT_SECRET_KEY
+      if (!jwt_secret) {
+          throw new Error('No jwt_secret set')
+      }
+      const jwt_payload: JwtPayloadWithId | string = jwt.verify(
+          token,
+          jwt_secret
+      )
+      if (!jwt_payload || !(jwt_payload as JwtPayloadWithId)?.[sign_key]) {
+          throw new Error('Unable to extract value from token')
+      }
+      return jwt_payload as JwtPayloadWithId
+  } catch (err) {
+      const Error = err as ServerReturnType
+      console.error(`Jwt decryption failure: ${Error?.message ?? ''}`)
+      throw laconic_unauthorized_error
+  }
+}
