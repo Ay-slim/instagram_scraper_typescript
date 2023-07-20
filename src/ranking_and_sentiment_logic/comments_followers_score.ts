@@ -1,4 +1,3 @@
-import { Request, Response } from "express";
 import { knex_client } from "../db/knex_client";
 import {
   CommentDBItem,
@@ -6,14 +5,13 @@ import {
   FollowersReturnTemplate
 } from "../utils/type_utils";
 
-export const aggregate_and_rank_comments_and_followers = async(req: Request, res: Response) => {
+export const aggregate_and_rank_comments_and_followers = async(athlete_id: number, batch_id: number) => {
   /**
    * Some Notes
    * 
    * Comments have a weight of 3 and followership has a weight of 2, interaction score is i_s = (3 * no_of_comments) + (2  * (is_follower ? 1 : 0))
    * A decent amount of shitty coding practices here (using global variables, updating dicts implicitly as a side effect within forEach loops). Doing this because the amount of data being processed here is huge and we're trying to conserve space as much as possible
    */
-  const { athlete_id, batch_id } = req.body;
   const { followers: followers_raw }: {followers: string} = await knex_client('ig_fb_followers').select('followers').where({ athlete_id, batch_id }).first()
   const followers: FollowersReturnTemplate[] = JSON.parse(followers_raw)
   const raw_comments: { comments: string }[] = await knex_client('ig_fb_posts').select('comments').where({athlete_id, batch_id})
@@ -90,7 +88,6 @@ export const aggregate_and_rank_comments_and_followers = async(req: Request, res
   await knex_client('ig_fb_followers')
     .update({fan_rankings: JSON.stringify(fan_rankings)})
     .where({athlete_id, batch_id})
-  res.status(201).json({
-    status: "successful",
-  });
+  
+  return "done"
 }
