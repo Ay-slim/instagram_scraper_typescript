@@ -4,7 +4,9 @@
   "main": "index.ts",
   "scripts": {
     "dev": "ts-node-dev --transpile-only --no-notify --exit-child src/index.ts",
-    "knex": "./node_modules/.bin/knex --knexfile knexfile.ts"
+    "build": "npx tsc",
+    "start": "node dist/index.js",
+    "knex": "cd dist && ../node_modules/.bin/knex --knexfile src/db/knexfile.js"
   },
   "license": "MIT",
   "devDependencies": {
