@@ -1,7 +1,6 @@
 import dotenv from "dotenv";
 import puppeteer from "puppeteer";
 import axios from "axios";
-import { Request, Response } from "express";
 
 import {
   CommentsAPIResponse,
@@ -19,14 +18,8 @@ dotenv.config()
 const username = process.env.BOT_ACCT_USERNAME;
 const passWord = process.env.BOT_ACCT_PASSWORD;
 
-export const scrape_comments = async(req: Request, res: Response) => {
-  const username_to_scrape: string = req.body?.username;
-  const athlete_id = req.body?.athlete_id
-  const batch_id = req.body?.batch_id
+export const scrape_comments = async(athlete_id: number, batch_id: number, username_to_scrape: string) => {
   const MAX_POSTS_TO_SCRAPE = 100;
-  if (!username_to_scrape) {
-    res.json({ status: "Failed", message: "No username" });
-  }
   console.log(username_to_scrape);
   const browser = await puppeteer.launch({
     args: ["--incognito"],
@@ -147,6 +140,12 @@ export const scrape_comments = async(req: Request, res: Response) => {
         await page.waitForTimeout(1500);
       } else {
         completed_comments_scraping = true;
+        await knex_client('ig_fb_followers').update({
+          scraped_comments: 'true'
+        }).where({
+          athlete_id, batch_id
+        })
+        console.log("Done scraping comments")
         await page.close();
       }
     }
@@ -159,11 +158,31 @@ export const scrape_comments = async(req: Request, res: Response) => {
 
   //Handle turn notifications on/off popup
   try {
-    await page.waitForSelector("._a9_1", { timeout: 6000 });
-    await page.click("._a9_1"); //click not now
+    await page.waitForSelector('button[class="_acan _acap _acas _aj1-"]', { timeout: 3000 });
+    const save_login_button =  await page.$('button[class="_acan _acap _acas _aj1-"]');
+    if (save_login_button) {
+      await save_login_button.click();
+      console.log("Clicked save login");
+    }
+  } catch(err) {
+    console.log("No save login dialog, skipping...");
+  }
+  try {
+    await page.waitForSelector('div[role="dialog"]', { timeout: 3000 });
+    const not_now_button = await page.$('button[class="_a9-- _a9_1"]');
+    if (not_now_button){
+      await not_now_button.click();
+      console.log("clicked not_now");
+    }
   } catch (err) {
     console.log("No popup notification, skipping...")
   }
+
+  // const notification_popup_dialog = await page.$('div[role="dialog"]');
+  // if (notification_popup_dialog) {
+  //   const not_now_button = await page.$('button[class="_a9-- _a9_1"]');
+  //   await not_now_button.click();
+  // }
 
   await page.waitForSelector('a[href="#"]');
   await page.waitForTimeout(3000);
@@ -177,15 +196,12 @@ export const scrape_comments = async(req: Request, res: Response) => {
   await page.waitForTimeout(5000);
   await page.waitForSelector('a[href^="/p/"]');
   const first_post_element = await page.$('a[href^="/p/"]');
-  console.log(first_post_element, "ABI POST ELEMENT NO DEY???");
   await first_post_element.click();
+  console.log("Clicked first post element")
 
   while (!completed_comments_scraping) {
     console.log(`Waiting to finish comments scraping`);
     await new Promise((resolve) => setTimeout(resolve, 1500));
   }
-  
-  res.status(201).json({
-    status: "successful",
-  });
+  return "done"
 }
