@@ -36,7 +36,7 @@ export const make_followers_request = async (
     } catch (e) {
       console.log(e, "AXIOS ERROR");
     }
-    console.log(resp?.data?.users?.length, "GOT AXIOSSSS RESPONSEEEEEEEE");
+    //console.log(resp?.data?.users?.length, "GOT AXIOSSSS RESPONSEEEEEEEE");
     followers_list = followers_list.concat(
       resp.data.users.map((followers_obj) => {
         return {
@@ -46,7 +46,7 @@ export const make_followers_request = async (
         };
       })
     );
-    console.log("Updated FollowersList");
+    //console.log("Updated FollowersList");
     next_max_id = resp.data.next_max_id;
     if (followers_list.length < followers_num) {
       console.log("IN INFINITE WAITTTT");
@@ -96,7 +96,8 @@ export const normalize_profile_basics = (raw_basics: ProfileType): NormalizedPro
     no_of_posts: raw_basics.edge_owner_to_timeline_media.count,
     following: raw_basics.edge_follow.count,
     followers: raw_basics.edge_followed_by.count,
-    profile_pic_url: raw_basics.profile_pic_url
+    profile_pic_url: raw_basics.profile_pic_url,
+    is_private: raw_basics.is_private
   }
 }
 
@@ -131,4 +132,8 @@ export const login_auth = async (
       console.error(`Jwt decryption failure: ${Error?.message ?? ''}`)
       throw laconic_unauthorized_error
   }
+}
+
+export const average_num_array = (arr: number[]) => {
+  return arr.reduce((accumulator, current_num) => accumulator + current_num, 0) / arr.length
 }

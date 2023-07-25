@@ -22,6 +22,7 @@ export type ProfileType = {
   edge_follow: PpDataCount;
   edge_followed_by: PpDataCount;
   profile_pic_url: string;
+  is_private: boolean;
 }
 
 export type NormalizedProfileType = {
@@ -32,6 +33,8 @@ export type NormalizedProfileType = {
   following: number;
   followers: number;
   profile_pic_url: string;
+  is_private: boolean;
+  can_crawl_all_followers?: boolean;
 }
 
 export type RequestWithProfile = Request & {
@@ -55,6 +58,10 @@ export type ServerReturnType = {
   status: number
   error: boolean
   message: string
+}
+
+export type CanCrawlFollowers = {
+  big_list: boolean;
 }
 
 /**
@@ -167,6 +174,10 @@ export type FanRankings = {
   [key: string]: {
     interaction_score?: number;
     is_follower?: boolean;
+    sentiment_ratings?: number[];
     aggregated_comments: string[];
+    average_sentiment?: number;
   }
 }
+
+export type FanRankingsArr = { username: string } & FanRankings

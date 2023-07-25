@@ -97,6 +97,7 @@ export const scrape_followers = async(followers_arg: FollowersArg) => {
       //Add follower data to DB
       await knex_client('ig_fb_followers').update({
         followers: JSON.stringify(final_followers_list),
+        scraped_followers: 'true',
       }).where({athlete_id, batch_id})
       await page.close();
     }
@@ -107,14 +108,30 @@ export const scrape_followers = async(followers_arg: FollowersArg) => {
   await page.type("input[name=password]", password, { delay: 20 });
   await page.click("button[type=submit]", { delay: 2000 });
 
-  //Handle turn on/off notifications popup
+ // Handle turn on/off notifications popup
   try {
-    await page.waitForSelector("._a9_1", { timeout: 6000 });
-    await page.click("._a9_1"); //click not now
+    await page.waitForSelector('button[class="_acan _acap _acas _aj1-"]', { timeout: 3000 });
+    const save_login_button =  await page.$('button[class="_acan _acap _acas _aj1-"]');
+    if (save_login_button) {
+      await save_login_button.click();
+    }
+  } catch(err) {
+
+  }
+  try {
+    await page.waitForSelector('div[role="dialog"]', { timeout: 3000 });
+    const not_now_button = await page.$('button[class="_a9-- _a9_1"]');
+    if (not_now_button){
+      await not_now_button.click()
+    }
   } catch (err) {
     console.log("No popup notification, skipping...")
   }
-
+  // const notification_popup_dialog = await page.$('div[role="dialog"]');
+  // if (notification_popup_dialog) {
+  //   const not_now_button = await page.$('button[class="_a9-- _a9_1"]');
+  //   await not_now_button.click();
+  // }
   await page.waitForSelector('a[href="#"]');
   await page.waitForTimeout(3000);
   const searchLink = await page.$('a[href="#"]');

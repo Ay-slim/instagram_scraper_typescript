@@ -158,11 +158,31 @@ export const scrape_comments = async(athlete_id: number, batch_id: number, usern
 
   //Handle turn notifications on/off popup
   try {
-    await page.waitForSelector("._a9_1", { timeout: 6000 });
-    await page.click("._a9_1"); //click not now
+    await page.waitForSelector('button[class="_acan _acap _acas _aj1-"]', { timeout: 3000 });
+    const save_login_button =  await page.$('button[class="_acan _acap _acas _aj1-"]');
+    if (save_login_button) {
+      await save_login_button.click();
+      console.log("Clicked save login");
+    }
+  } catch(err) {
+    console.log("No save login dialog, skipping...");
+  }
+  try {
+    await page.waitForSelector('div[role="dialog"]', { timeout: 3000 });
+    const not_now_button = await page.$('button[class="_a9-- _a9_1"]');
+    if (not_now_button){
+      await not_now_button.click();
+      console.log("clicked not_now");
+    }
   } catch (err) {
     console.log("No popup notification, skipping...")
   }
+
+  // const notification_popup_dialog = await page.$('div[role="dialog"]');
+  // if (notification_popup_dialog) {
+  //   const not_now_button = await page.$('button[class="_a9-- _a9_1"]');
+  //   await not_now_button.click();
+  // }
 
   await page.waitForSelector('a[href="#"]');
   await page.waitForTimeout(3000);

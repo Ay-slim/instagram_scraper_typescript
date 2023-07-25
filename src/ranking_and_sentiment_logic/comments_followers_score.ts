@@ -1,11 +1,13 @@
+import * as language from '@google-cloud/language';
 import { knex_client } from "../db/knex_client";
 import {
   CommentDBItem,
   FanRankings,
   FollowersReturnTemplate
 } from "../utils/type_utils";
+import { average_num_array } from '../utils/helper_functions';
 
-export const aggregate_and_rank_comments_and_followers = async(athlete_id: number, batch_id: number) => {
+export const aggregate_and_rank_comments_and_followers = async(athlete_id: number, batch_id: number, has_followers: boolean) => {
   /**
    * Some Notes
    * 
@@ -66,28 +68,63 @@ export const aggregate_and_rank_comments_and_followers = async(athlete_id: numbe
 
   //Assign an interaction score based on comment count and set follower boolean flag
   for (let username in fan_rankings) {
-    fan_rankings[username].interaction_score = 3 * fan_rankings[username].aggregated_comments.length
-    fan_rankings[username].is_follower = false
+    if (fan_rankings[username].aggregated_comments.length > 0) {
+      fan_rankings[username].interaction_score = fan_rankings[username].aggregated_comments.length
+      fan_rankings[username].is_follower = false
+    }
   }
 
   //Update interaction score based on whether each fan is a follower
-  followers.forEach(follower => {
-    //console.log(fan_rankings)
-    if (fan_rankings[follower.username]) {
-      fan_rankings[follower.username].is_follower = true
-      fan_rankings[follower.username].interaction_score += 2
-    } else {
-      fan_rankings[follower.username] = {
-        is_follower: true,
-        interaction_score: 2,
-        aggregated_comments: []
+  if (has_followers) {
+    followers.forEach(follower => {
+      //console.log(fan_rankings)
+      if (fan_rankings[follower.username] && fan_rankings[follower.username]?.interaction_score) {
+        fan_rankings[follower.username].is_follower = true
+        fan_rankings[follower.username].interaction_score = Number((fan_rankings[follower.username].interaction_score * 1.2).toFixed(1))
       }
-    }
-  })
+    })
+  }
   //console.log(fan_rankings)
+  const client = new language.LanguageServiceClient();
+  const plain_text_string: "PLAIN_TEXT" = "PLAIN_TEXT"
+  for (let username in fan_rankings) {
+    if (fan_rankings[username].aggregated_comments.length === 0) {
+      continue;
+    }
+    const sentiment_ratings = await Promise.all(fan_rankings[username].aggregated_comments.map(async comment => {
+      try {
+        const document = {
+          content: comment,
+          type: plain_text_string,
+        };
+        const [result] = await client.analyzeSentiment({document});
+        const { score } = result.documentSentiment;
+        return score;
+      } catch (err) {
+        console.log(`Error occurred analyzing comment: ${comment}`)
+        console.log(err)
+        return 0;
+      }
+    }))
+    fan_rankings[username]['sentiment_ratings'] = sentiment_ratings;
+    fan_rankings[username]['average_sentiment'] = Number(average_num_array(sentiment_ratings).toFixed(1))
+  }
+  const fan_rankings_array = [];
+  for (let username in fan_rankings) {
+    if (fan_rankings[username]?.interaction_score) {
+      fan_rankings_array.push({
+        ...fan_rankings[username], ...{username}
+      })
+    }
+  }
+  fan_rankings_array.sort((a, b)=> {
+    return b.interaction_score - a.interaction_score;
+  })
   await knex_client('ig_fb_followers')
-    .update({fan_rankings: JSON.stringify(fan_rankings)})
+    .update({fan_rankings: JSON.stringify(fan_rankings_array)})
     .where({athlete_id, batch_id})
   
   return "done"
 }
+
+// aggregate_and_rank_comments_and_followers(1, 1);
