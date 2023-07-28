@@ -1,0 +1,21 @@
+# fly.toml app configuration file generated for pulsescraper on 2023-07-25T17:40:11Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "pulsescraper"
+primary_region = "lhr"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+[env]
+  NODE_ENV="staging"
+  DB_USERNAME="ycok1lrf9bujdqovn06k"
+  DB_HOST="aws.connect.psdb.cloud"
+  DB_NAME="fan-engagement-mvp"
+  DB_PORT=3306
+  AWS_S3_BUCKET="athlete-images"

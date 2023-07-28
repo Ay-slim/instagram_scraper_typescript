@@ -10,6 +10,7 @@ const acct_username = process.env.BOT_ACCT_USERNAME;
 const password = process.env.BOT_ACCT_PASSWORD;
 
 export const scrape_profile_details = async (req: RequestUsername, res: Response) => {
+  console.log("In scrape_profile_detais handler")
   const { username }: {username: string} = req.body
   const browser = await puppeteer.launch({
     args: ["--incognito"],
@@ -42,7 +43,7 @@ export const scrape_profile_details = async (req: RequestUsername, res: Response
     ) {
       console.log("Did we get in the followers regex")
       const followers_details_response: CanCrawlFollowers = await pup_res.json();
-      console.log(followers_details_response, "Followers details response")
+      //console.log(followers_details_response, "Followers details response")
       can_crawl_all_followers = followers_details_response.big_list;
       has_checked_ff_biglist = true;
     }
