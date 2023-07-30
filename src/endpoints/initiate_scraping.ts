@@ -29,10 +29,12 @@ export const start_scraping = async(req: RequestWithProfile, res: Response) => {
       .orderBy('batch_id', 'desc')
       .limit(1)
       .first() ?? { batch_id: 0, scraped_comments: 'new', scraped_followers: 'new' }
+    //console.log(`curr_batch_id: ${current_batch_id}, scraped_foll: ${scraped_followers}, scraped_comm: ${scraped_comments}: DB_DEETS`)
     const has_scraped_followers_or_new = ['new', 'true'].includes(scraped_followers)
     const has_scraped_comments_or_new = ['new', 'true'].includes(scraped_comments);
+    //console.log(has_scraped_comments_or_new, 'commentss', has_scraped_followers_or_new, 'followersss')
     const batch_id: number = has_scraped_comments_or_new && has_scraped_followers_or_new ? current_batch_id + 1: current_batch_id;
-    console.log(batch_id, 'BATCHHHHH_IDDDD', current_batch_id)
+    //console.log(batch_id, 'BATCHHHHH_IDDDD', current_batch_id)
     const profile_details: NormalizedProfileType = req.body;
     if (!profile_details.username) {
       res.json({ status: "Failed", message: "No username" });
@@ -44,9 +46,14 @@ export const start_scraping = async(req: RequestWithProfile, res: Response) => {
         profile_details: JSON.stringify(profile_details)
       })
     }
-    console.log("Calling followers scraper")
-    const should_scrape_followers = ['new', 'false'].includes(scraped_followers) && has_scraped_comments_or_new;
+    let should_scrape_followers = true;
+    if (scraped_followers === 'true' && scraped_comments === 'false') {
+      should_scrape_followers = false;
+    }
+    //const should_scrape_followers = ['new', 'false'].includes(scraped_followers) && has_scraped_comments_or_new;
+    //console.log(should_scrape_followers, 'SHOULD SCRAPE FOLLOWERS')
     if (req?.body?.can_crawl_all_followers && should_scrape_followers) {
+      console.log("Calling followers scraper")
       await scrape_followers({
         batch_id,
         athlete_id,

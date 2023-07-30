@@ -1,4 +1,5 @@
 import * as language from '@google-cloud/language';
+import {knex_client} from "./db/knex_client";
 
 const test_sentiments = async() => {
   const client = new language.LanguageServiceClient();
@@ -163,3 +164,9 @@ const test_sentiments = async() => {
 
 
 //aggregate_and_rank_comments_and_followers()
+
+// const db_test = async() => {
+//   console.log('here')
+//   console.log(await knex_client('athletes').select('email').where({id: 1}))
+// }
+// db_test()

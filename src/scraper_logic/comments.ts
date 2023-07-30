@@ -4,7 +4,9 @@ import axios from "axios";
 
 import {
   CommentsAPIResponse,
-  AxiosCommentsResponse
+  AxiosCommentsResponse,
+  PostsAPIResponse,
+  AxiosPostsResponse
 } from "../utils/type_utils";
 
 import { 
@@ -31,6 +33,8 @@ export const scrape_comments = async(athlete_id: number, batch_id: number, usern
   });
   const comments_regex =
     /https:\/\/www.instagram.com\/api\/v1\/media\/(\d+)\/comments\//;
+  const posts_regex = 
+    /^https?:\/\/(?:www\.)?instagram\.com\/api\/v1\/feed\/user\/[\w.-]+(?:\/\w+)*\/?\?.*$/;
   await page.waitForTimeout(2000);
   await page.setRequestInterception(true);
   page.on("request", async (req) => {
@@ -39,23 +43,68 @@ export const scrape_comments = async(athlete_id: number, batch_id: number, usern
 
   let posts_handling_tracker = 0;
   let completed_comments_scraping = false;
+  let has_trapped_post_res = false;
+  let completed_posts_scraping = false;
+  const posts_img_url_dict: {[key: string]: string} = {}
+  let num_of_img_lens = 0;
   
   page.on("response", async (res) => {
+    if (posts_regex.test(res.request().url()) && !has_trapped_post_res) {
+      const posts_response: PostsAPIResponse = await res.json();
+      let has_more_posts: boolean = false;
+      let next_max_id: string;
+      num_of_img_lens += posts_response?.items?.length;
+      posts_response?.items?.forEach(post_response => {
+        posts_img_url_dict[post_response?.pk] = post_response?.image_versions2?.candidates[0]?.url ?? ""
+      });
+      has_more_posts = posts_response?.more_available && num_of_img_lens <= MAX_POSTS_TO_SCRAPE;
+      next_max_id = posts_response?.next_max_id
+      while(has_more_posts) {
+        const config = {
+          headers: res.request().headers(),
+        };
+        const dynamic_post_url = new URL(`https://www.instagram.com/api/v1/feed/user/${posts_response?.user?.pk}/?count=100`);
+        const dynamic_post_url_params = dynamic_post_url.searchParams;
+        dynamic_post_url_params.set("max_id", next_max_id);
+        const post_url = generate_url(dynamic_post_url, dynamic_post_url_params);
+        let post_axios_resp: AxiosPostsResponse;
+        try {
+          post_axios_resp = await axios.get(post_url, config);
+        }catch (err) {
+          console.log(`Posts Axios Error: ${err}`)
+        }
+        if (
+          !post_axios_resp.data || !post_axios_resp?.data?.items
+        ) {
+          break;
+        }
+        num_of_img_lens += post_axios_resp?.data?.items?.length;
+        has_more_posts = (post_axios_resp?.data?.more_available && num_of_img_lens <= MAX_POSTS_TO_SCRAPE) ?? false;
+        next_max_id = post_axios_resp?.data?.next_max_id ?? "";
+        post_axios_resp?.data?.items.forEach(post_response => {
+          posts_img_url_dict[post_response?.pk] = post_response?.image_versions2?.candidates[0]?.url ?? ""
+        });
+      }
+      //console.log(num_of_img_lens, "NUM IMG LENS")
+      completed_posts_scraping = true;
+    }
     if (comments_regex.test(res.request().url())) {
       console.log("In comments handler")
       const post_pk = res.request().url().split("/")[6];
       posts_handling_tracker++
       const comments_response: CommentsAPIResponse = await res.json();
       const post_metadata = JSON.stringify({
-        caption: comments_response.caption,
-        comment_count: comments_response.comment_count
+        caption: comments_response.caption?.text,
+        comment_count: comments_response.comment_count,
+        media_url: posts_img_url_dict[post_pk]
       })
+      //console.log(post_metadata, 'post metadata')
       const db_update_packet = {
         athlete_id,
         batch_id,
         post_batch_position: posts_handling_tracker,
         post_id: post_pk,
-        post_metadata: JSON.stringify(post_metadata),
+        post_metadata,
         comments: JSON.stringify([])
       }
       const comments_exist = comments_response?.comments && comments_response?.comments?.length
@@ -194,6 +243,10 @@ export const scrape_comments = async(athlete_id: number, batch_id: number, usern
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("NumpadEnter");
   await page.waitForTimeout(5000);
+  while (!completed_posts_scraping) {
+    console.log(`Waiting to finish posts scraping`);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+  }
   await page.waitForSelector('a[href^="/p/"]');
   const first_post_element = await page.$('a[href^="/p/"]');
   await first_post_element.click();
@@ -205,3 +258,5 @@ export const scrape_comments = async(athlete_id: number, batch_id: number, usern
   }
   return "done"
 }
+
+//scrape_comments(500, 120, '42_life_universe_everything')
