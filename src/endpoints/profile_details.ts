@@ -15,6 +15,7 @@ export const scrape_profile_details = async (req: RequestUsername, res: Response
   const browser = await puppeteer.launch({
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
     headless: false,
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
   });
   const page = await browser.newPage();
   await page.goto("https://www.instagram.com/accounts/login", {
