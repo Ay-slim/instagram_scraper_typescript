@@ -24,7 +24,7 @@ export const scrape_comments = async(athlete_id: number, batch_id: number, usern
   const MAX_POSTS_TO_SCRAPE = 100;
   console.log(username_to_scrape);
   const browser = await puppeteer.launch({
-    args: ["--incognito"],
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
     headless: false,
   });
   const page = await browser.newPage();

@@ -23,7 +23,7 @@ export const scrape_followers = async(followers_arg: FollowersArg) => {
   console.log("Begin followers scraping")
   const {batch_id, athlete_id, followers_count, username } = followers_arg
   const browser = await puppeteer.launch({
-    args: ["--incognito"],
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
     headless: false,
   });
   const page = await browser.newPage();

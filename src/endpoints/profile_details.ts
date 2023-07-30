@@ -13,7 +13,7 @@ export const scrape_profile_details = async (req: RequestUsername, res: Response
   console.log("In scrape_profile_detais handler")
   const { username }: {username: string} = req.body
   const browser = await puppeteer.launch({
-    args: ["--incognito"],
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
     headless: false,
   });
   const page = await browser.newPage();
