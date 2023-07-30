@@ -12,8 +12,8 @@ app.use(express.json())
 
 const home_endpoint = async (req: Request, res: Response) => {
   console.log("In home handler")
-  // const email_test = await knex_client('athletes').select('email').where({id: 1});
-  // console.log(email_test)
+  const email_test = await knex_client('athletes').select('email').where({id: 1});
+  console.log(email_test, 'TEST DB')
   res.status(200).json({message: "Welcome!"})
 }
 

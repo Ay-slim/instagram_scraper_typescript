@@ -7,7 +7,10 @@
     "sourceMap": true,
     "outDir": "dist",
     "lib": ["es2015", "es2019", "es2020", "dom"],
+    "types": [
+      "node"
+    ],
     "noEmitHelpers": false
   },
-  "exclude": ["dist"]
+  "exclude": ["node_modules"]
 }
