@@ -181,3 +181,54 @@ export type FanRankings = {
 }
 
 export type FanRankingsArr = { username: string } & FanRankings
+
+type ApiPostItem = {
+  pk: string;
+  taken_at: number;
+  image_versions2: {
+    [key: string]: any,
+    candidates: {
+      width: number;
+      height: number;
+      url: string;
+    }[]
+  };
+  comment_count: number;
+  like_count: number;
+  play_count: number;
+  video_codec: string;
+  caption: {
+    text: string;
+    [key: string]: any;
+  };
+  [key:string]: any;
+}
+
+export type PostsAPIResponse = {
+  [key: string]: any;
+  next_max_id: string;
+  more_available: boolean;
+  items: ApiPostItem[];
+  user: {
+    pk: string;
+    [key: string]: any;
+  }
+}
+
+export type AxiosPostsResponse = {
+  [key: string]: any;
+  data: PostsAPIResponse;
+};
+
+export type ParsedCommentsType = {
+  comments: {
+    text: string;
+    sentiment_rating: number;
+    username: string;
+    profile_pic_url: string;
+    pk: string;
+  }[],
+  post_id: string;
+  caption: string;
+  media_url: string;
+}
