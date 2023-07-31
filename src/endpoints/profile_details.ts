@@ -54,6 +54,7 @@ export const scrape_profile_details = async (req: RequestUsername, res: Response
     "--autoplay-policy=user-gesture-required",
     "--window-size=1920x1080",],
     headless: true,
+    executablePath: process.env.CHROME_EXECUTABLE_PATH,
   });
   const page = await browser.newPage();
   await page.goto("https://www.instagram.com/accounts/login", {
