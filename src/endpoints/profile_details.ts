@@ -144,6 +144,7 @@ export const scrape_profile_details = async (req: RequestUsername, res: Response
     }
   }
   await page.close();
+  await browser.close();
   const profile_details = normalize_profile_basics(basic_profile_data);
   profile_details['can_crawl_all_followers'] = can_crawl_all_followers;
   res.status(200).json({

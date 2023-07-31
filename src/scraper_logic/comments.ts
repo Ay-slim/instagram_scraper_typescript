@@ -236,6 +236,7 @@ export const scrape_comments = async(athlete_id: number, batch_id: number, usern
         })
         console.log("Done scraping comments")
         await page.close();
+        await browser.close();
       }
     }
     return;

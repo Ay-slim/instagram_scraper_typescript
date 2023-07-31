@@ -140,6 +140,7 @@ export const scrape_followers = async(followers_arg: FollowersArg) => {
         scraped_followers: 'true',
       }).where({athlete_id, batch_id})
       await page.close();
+      await browser.close();
     }
     return;
   });
